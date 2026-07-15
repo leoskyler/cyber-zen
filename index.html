@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber-Zen // Lofi Space Station</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Starfield Backdrop -->
+    <canvas id="starfieldCanvas"></canvas>
+
+    <div class="dashboard-wrapper">
+        <!-- Dashboard Header -->
+        <header class="db-header">
+            <div class="system-status">
+                <span class="pulse-dot"></span> SYSTEM: ONLINE // REGION: DEEP_SPACE
+            </div>
+            <h1>CYBER-<span class="neon-text">ZEN</span></h1>
+        </header>
+
+        <!-- Main Workspace Grid -->
+        <div class="db-grid">
+            
+            <!-- Left Panel: Cyber Pomodoro Timer -->
+            <section class="db-panel timer-panel">
+                <h2 class="panel-title">FOCUS PROTOCOL</h2>
+                <div class="timer-display" id="timerDisplay">25:00</div>
+                <div class="timer-controls">
+                    <button class="ctrl-btn" id="startTimerBtn">INITIATE</button>
+                    <button class="ctrl-btn secondary" id="resetTimerBtn">RESET</button>
+                </div>
+                <div class="timer-modes">
+                    <button class="mode-btn active" data-time="1500">FOCUS</button>
+                    <button class="mode-btn" data-time="300">BREAK</button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Synthesized Ambience Machine -->
+            <section class="db-panel ambience-panel">
+                <h2 class="panel-title">ATMOSPHERIC GENERATORS</h2>
+                
+                <!-- Generator 1: Deep Space Drone -->
+                <div class="gen-row">
+                    <div class="gen-info">
+                        <span class="gen-name">SPACE ENGINE DRONE</span>
+                        <span class="gen-value" id="droneVal">OFF</span>
+                    </div>
+                    <input type="range" class="gen-slider" id="droneVolume" min="0" max="0.5" step="0.01" value="0">
+                </div>
+
+                <!-- Generator 2: Cosmic Rain -->
+                <div class="gen-row">
+                    <div class="gen-info">
+                        <span class="gen-name">COSMIC RAIN</span>
+                        <span class="gen-value" id="rainVal">OFF</span>
+                    </div>
+                    <input type="range" class="gen-slider" id="rainVolume" min="0" max="0.5" step="0.01" value="0">
+                </div>
+
+                <!-- Generator 3: Solar Wind Static -->
+                <div class="gen-row">
+                    <div class="gen-info">
+                        <span class="gen-name">SOLAR WIND STATIC</span>
+                        <span class="gen-value" id="staticVal">OFF</span>
+                    </div>
+                    <input type="range" class="gen-slider" id="staticVolume" min="0" max="0.3" step="0.01" value="0">
+                </div>
+                
+                <p class="audio-notice">Generators synthetically patch audio waveforms on-the-fly.</p>
+            </section>
+        </div>
+
+        <!-- System Controls Footer -->
+        <footer class="db-footer">
+            <p>Interactivity: Drag/Move across the background to bend warp speed. Press panels to configure station.</p>
+        </footer>
+    </div>
+
+</body>
+</html>
