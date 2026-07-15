@@ -1,0 +1,285 @@
+:root {
+    --space-bg: #030308;
+    --panel-glass: rgba(10, 10, 22, 0.6);
+    --panel-border: rgba(0, 240, 255, 0.15);
+    
+    /* Neon glow colors */
+    --neon-blue: #00f0ff;
+    --neon-blue-glow: rgba(0, 240, 255, 0.35);
+    --neon-pink: #ff007f;
+    --neon-pink-glow: rgba(255, 0, 127, 0.35);
+    
+    --text-main: #e2e2ee;
+    --text-muted: #6e708a;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--space-bg);
+    color: var(--text-main);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Background Starfield Canvas */
+#starfieldCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background: radial-gradient(circle at center, #080818 0%, #020205 100%);
+    cursor: grab;
+}
+
+#starfieldCanvas:active {
+    cursor: grabbing;
+}
+
+/* Dashboard Wrapper holding all UI Elements */
+.dashboard-wrapper {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    pointer-events: none; /* Let clicks pass through to canvas starfield where appropriate */
+}
+
+/* Enable pointer events specifically on interactive UI panels */
+.db-header, .db-panel, .db-footer {
+    pointer-events: auto;
+}
+
+/* Header */
+.db-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 10px;
+}
+
+.system-status {
+    font-size: 0.75rem;
+    color: var(--neon-blue);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.1em;
+}
+
+.pulse-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--neon-blue);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--neon-blue);
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { opacity: 0.3; }
+}
+
+.db-header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+}
+
+.neon-text {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink-glow);
+}
+
+/* Workspace Grid */
+.db-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 650px) {
+    .db-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Glassmorphic Panel Styles */
+.db-panel {
+    background: var(--panel-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    border-left: 3px solid var(--neon-blue);
+    padding-left: 10px;
+}
+
+/* Focus Pomodoro Timer Stylings */
+.timer-panel {
+    text-align: center;
+    border-top: 3px solid var(--neon-blue);
+}
+
+.timer-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 15px var(--neon-blue-glow);
+    margin: 15px 0;
+    letter-spacing: 0.05em;
+}
+
+.timer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.ctrl-btn {
+    background: transparent;
+    border: 1px solid var(--neon-blue);
+    color: var(--neon-blue);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85rem;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ctrl-btn:hover {
+    background: var(--neon-blue);
+    color: #000;
+    box-shadow: 0 0 10px var(--neon-blue-glow);
+}
+
+.ctrl-btn.secondary {
+    border-color: var(--text-muted);
+    color: var(--text-muted);
+}
+
+.ctrl-btn.secondary:hover {
+    background: var(--text-muted);
+    color: #000;
+    box-shadow: none;
+}
+
+.timer-modes {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mode-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    padding: 5px 12px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn.active {
+    border-color: var(--neon-blue);
+    color: var(--neon-blue);
+    background: rgba(0, 240, 255, 0.05);
+}
+
+/* Atmospheric Generators */
+.ambience-panel {
+    border-top: 3px solid var(--neon-pink);
+}
+
+.gen-row {
+    margin-bottom: 18px;
+}
+
+.gen-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    margin-bottom: 6px;
+}
+
+.gen-name {
+    letter-spacing: 0.05em;
+}
+
+.gen-value {
+    color: var(--neon-pink);
+    font-weight: bold;
+}
+
+/* Sliders */
+.gen-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    outline: none;
+}
+
+.gen-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--neon-pink);
+    box-shadow: 0 0 8px var(--neon-pink-glow);
+    cursor: pointer;
+}
+
+.audio-notice {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Footer Instructions */
+.db-footer {
+    text-align: center;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+}
