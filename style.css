@@ -243,3 +243,73 @@ body {
     color: var(--text-primary);
     box-shadow: none;
 }
+/* --- Cyber Zen Dynamic Breathing Animations --- */
+.visualizer-inner {
+    transition: transform 4s ease-in-out, box-shadow 4s ease-in-out, border-color 2s ease-out;
+}
+
+/* Inhale state: Ring expands and glows intensely */
+.visualizer-inner.inhale {
+    transform: scale(1.12);
+    border-color: #00f0ff;
+    box-shadow: 0 0 35px rgba(0, 240, 255, 0.6), inset 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+/* Hold state: Ring stays large with a shifting neon purple glow */
+.visualizer-inner.hold {
+    transform: scale(1.12);
+    border-color: #aa70ff;
+    box-shadow: 0 0 45px rgba(170, 112, 255, 0.8), inset 0 0 25px rgba(170, 112, 255, 0.4);
+    animation: holdPulse 2s infinite ease-in-out;
+}
+
+/* Exhale state: Ring shrinks and dims */
+.visualizer-inner.exhale {
+    transform: scale(0.92);
+    border-color: #8a2be2;
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.3), inset 0 0 10px rgba(138, 43, 226, 0.15);
+}
+
+@keyframes holdPulse {
+    0%, 100% { opacity: 0.95; }
+    50% { opacity: 0.75; }
+}
+
+/* --- Synth Toggles Active States --- */
+.synth-toggle.active {
+    background: #aa70ff;
+    color: #120c1f;
+    box-shadow: 0 0 15px rgba(170, 112, 255, 0.6);
+    border-color: #ffb700;
+}
+
+/* --- Custom Branding Footer Style --- */
+.zen-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.developer-signature {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #8a2be2;
+    text-shadow: 0 0 8px rgba(138, 43, 226, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.05em;
+}
+
+.developer-signature .bolt-icon {
+    color: #ffb700;
+    text-shadow: 0 0 8px rgba(255, 183, 0, 0.5);
+}
+
+.developer-signature .handle {
+    color: #aa70ff;
+}
