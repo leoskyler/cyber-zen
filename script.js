@@ -1,216 +1,243 @@
-// Web Audio API Procedural Synthesizers
 let audioCtx = null;
-let humOsc = null;
-let humGain = null;
-let rainNode = null;
-let rainGain = null;
+let timerInterval = null;
+let breathingInterval = null;
+let isSessionActive = false;
+let timeLeft = 600; // 10 Minutes in seconds
 
+// Audio Nodes
+let humOsc1 = null;
+let humOsc2 = null;
+let humGain = null;
+let isHumPlaying = false;
+
+let rainNode = null;
+let rainFilter = null;
+let rainGain = null;
+let isRainPlaying = false;
+
+// DOM Elements
+const breathRing = document.getElementById("breathRing");
+const breathState = document.getElementById("breathState");
+const timeRemaining = document.getElementById("timeRemaining");
+const sessionBtn = document.getElementById("sessionBtn");
+const resetBtn = document.getElementById("resetBtn");
+const humToggle = document.getElementById("humToggle");
+const rainToggle = document.getElementById("rainToggle");
+const statusIndicator = document.getElementById("statusIndicator");
+
+// Initialize Web Audio
 function initAudio() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
 }
 
-// 1. Synthesizes a deep binaural space-shuttle drone (Cosmic Hum)
+/* --- Procedural Synthesizers --- */
+
+// 1. Cosmic Hum (Binaural Drone)
 function startCosmicHum() {
     initAudio();
-    if (humOsc) return;
+    const now = audioCtx.currentTime;
 
-    humOsc = audioCtx.createOscillator();
-    const lfo = audioCtx.createOscillator();
-    const lfoGain = audioCtx.createGain();
-    const filter = audioCtx.createBiquadFilter();
+    humOsc1 = audioCtx.createOscillator();
+    humOsc2 = audioCtx.createOscillator();
     humGain = audioCtx.createGain();
 
-    humOsc.type = 'sawtooth';
-    humOsc.frequency.setValueAtTime(55, audioCtx.currentTime); // Deep A1 note
+    humOsc1.type = 'sine';
+    humOsc1.frequency.setValueAtTime(110, now); // 110Hz deep tone
 
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(110, audioCtx.currentTime);
-    filter.Q.setValueAtTime(3, audioCtx.currentTime);
+    humOsc2.type = 'sine';
+    humOsc2.frequency.setValueAtTime(111.5, now); // Slightly detuned for 1.5Hz binaural beat effect
 
-    lfo.frequency.setValueAtTime(0.12, audioCtx.currentTime); // Slow sweep (LFO)
-    lfoGain.gain.setValueAtTime(40, audioCtx.currentTime);
+    humGain.gain.setValueAtTime(0, now);
+    humGain.gain.linearRampToValueAtTime(0.35, now + 1.5); // Smooth fade in
 
-    humGain.gain.setValueAtTime(0.08, audioCtx.currentTime); // Keep it ambient
-
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
-    humOsc.connect(filter);
-    filter.connect(humGain);
+    humOsc1.connect(humGain);
+    humOsc2.connect(humGain);
     humGain.connect(audioCtx.destination);
 
-    humOsc.start();
-    lfo.start();
+    humOsc1.start();
+    humOsc2.start();
+    isHumPlaying = true;
+    humToggle.textContent = "ON";
+    humToggle.classList.add("active");
 }
 
 function stopCosmicHum() {
-    if (humOsc) {
-        humOsc.stop();
-        humOsc.disconnect();
-        humOsc = null;
+    if (humGain && audioCtx) {
+        const now = audioCtx.currentTime;
+        humGain.gain.cancelScheduledValues(now);
+        humGain.gain.linearRampToValueAtTime(0, now + 0.8); // Smooth fade out
+        setTimeout(() => {
+            if (humOsc1) { humOsc1.stop(); humOsc1.disconnect(); }
+            if (humOsc2) { humOsc2.stop(); humOsc2.disconnect(); }
+            isHumPlaying = false;
+        }, 800);
     }
+    humToggle.textContent = "OFF";
+    humToggle.classList.remove("active");
 }
 
-// 2. Generates procedural Pink/Brown noise mimicking a futuristic rain curtain
+// 2. Cyber Rain (Real-time Noise Generation)
 function startCyberRain() {
     initAudio();
-    if (rainNode) return;
+    const now = audioCtx.currentTime;
 
-    const bufferSize = 2 * audioCtx.sampleRate;
-    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-
-    // Dynamic fractal brown noise calculation
-    let lastOut = 0.0;
+    // Create a 2-second buffer of random noise
+    const bufferSize = audioCtx.sampleRate * 2;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        output[i] = (lastOut + (0.02 * white)) / 1.02;
-        lastOut = output[i];
-        output[i] *= 3.5; // Gain compensation
+        data[i] = Math.random() * 2 - 1;
     }
 
     rainNode = audioCtx.createBufferSource();
-    rainNode.buffer = noiseBuffer;
+    rainNode.buffer = buffer;
     rainNode.loop = true;
 
-    const filter = audioCtx.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(450, audioCtx.currentTime);
+    // Filter to shape raw noise into soft rain
+    rainFilter = audioCtx.createBiquadFilter();
+    rainFilter.type = 'lowpass';
+    rainFilter.frequency.setValueAtTime(800, now);
 
     rainGain = audioCtx.createGain();
-    rainGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    rainGain.gain.setValueAtTime(0, now);
+    rainGain.gain.linearRampToValueAtTime(0.25, now + 1.0); // Smooth fade in
 
-    rainNode.connect(filter);
-    filter.connect(rainGain);
+    rainNode.connect(rainFilter);
+    rainFilter.connect(rainGain);
     rainGain.connect(audioCtx.destination);
 
     rainNode.start();
+    isRainPlaying = true;
+    rainToggle.textContent = "ON";
+    rainToggle.classList.add("active");
+
+    // Dynamic wind/rain sweeping effect
+    simulateWind();
+}
+
+function simulateWind() {
+    if (!isRainPlaying || !rainFilter) return;
+    const now = audioCtx.currentTime;
+    const sweepFreq = 600 + Math.random() * 500; // Drifts between 600Hz and 1100Hz
+    rainFilter.frequency.exponentialRampToValueAtTime(sweepFreq, now + 3 + Math.random() * 3);
+    setTimeout(simulateWind, 4000);
 }
 
 function stopCyberRain() {
-    if (rainNode) {
-        rainNode.stop();
-        rainNode.disconnect();
-        rainNode = null;
+    if (rainGain && audioCtx) {
+        const now = audioCtx.currentTime;
+        rainGain.gain.cancelScheduledValues(now);
+        rainGain.gain.linearRampToValueAtTime(0, now + 0.8);
+        setTimeout(() => {
+            if (rainNode) { rainNode.stop(); rainNode.disconnect(); }
+            isRainPlaying = false;
+        }, 800);
     }
+    rainToggle.textContent = "OFF";
+    rainToggle.classList.remove("active");
 }
 
-// Timer & Breathing Coach Engine
-let timerDuration = 600; // 10 minutes in seconds
-let timeLeft = timerDuration;
-let timerInterval = null;
-let breathInterval = null;
-let isRunning = false;
+/* --- Breathing Logic Loop --- */
+const breathingSequence = [
+    { state: "INHALE", duration: 4000, className: "inhale" },
+    { state: "HOLD", duration: 4000, className: "hold" },
+    { state: "EXHALE", duration: 4000, className: "exhale" }
+];
+let currentStep = 0;
 
-const breathRing = document.getElementById("breathRing");
-const breathState = document.getElementById("breathState");
-const timeRemainingDisplay = document.getElementById("timeRemaining");
-const statusIndicator = document.querySelector(".status-indicator");
+function runBreathingStep() {
+    if (!isSessionActive) return;
 
-function updateTimerDisplay() {
-    const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-    const secs = (timeLeft % 60).toString().padStart(2, '0');
-    timeRemainingDisplay.textContent = `${mins}:${secs}`;
+    const step = breathingSequence[currentStep];
+    
+    // UI Updates
+    breathState.textContent = step.state;
+    breathRing.className = "visualizer-inner " + step.className;
+
+    breathingInterval = setTimeout(() => {
+        currentStep = (currentStep + 1) % breathingSequence.length;
+        runBreathingStep();
+    }, step.duration);
 }
 
-// Seamless Breathing Pattern (4s Inhale, 4s Exhale)
-function runBreathingPattern() {
-    if (!isRunning) return;
+/* --- Main Deep Work Timer --- */
+function updateTimerUI() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timeRemaining.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
 
-    let inhale = true;
-    breathState.textContent = "INHALE";
-    breathRing.className = "visualizer-inner inhale";
+function startSession() {
+    initAudio();
+    isSessionActive = true;
+    sessionBtn.textContent = "TERMINATE SESSION";
+    statusIndicator.textContent = "ACTIVE";
+    statusIndicator.classList.remove("pulses");
 
-    breathInterval = setInterval(() => {
-        inhale = !inhale;
-        if (inhale) {
-            breathState.textContent = "INHALE";
-            breathRing.className = "visualizer-inner inhale";
+    // Start Breathing Core
+    currentStep = 0;
+    runBreathingStep();
+
+    // Start Countdown Timer
+    timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            updateTimerUI();
         } else {
-            breathState.textContent = "EXHALE";
-            breathRing.className = "visualizer-inner exhale";
+            endSession();
         }
-    }, 4000);
+    }, 1000);
 }
 
-function toggleSession() {
-    initAudio();
-    if (audioCtx.state === "suspended") {
-        audioCtx.resume();
-    }
-
-    if (isRunning) {
-        // Pause State
-        clearInterval(timerInterval);
-        clearInterval(breathInterval);
-        isRunning = false;
-        document.getElementById("sessionBtn").textContent = "RESUME DEEP WORK";
-        statusIndicator.textContent = "PAUSED";
-        breathRing.className = "visualizer-inner";
-        breathState.textContent = "PAUSED";
-    } else {
-        // Run State
-        isRunning = true;
-        document.getElementById("sessionBtn").textContent = "PAUSE SYSTEM";
-        statusIndicator.textContent = "ACTIVE FOCUS";
-        runBreathingPattern();
-
-        timerInterval = setInterval(() => {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateTimerDisplay();
-            } else {
-                completeSession();
-            }
-        }, 1000);
-    }
-}
-
-function resetSession() {
+function endSession() {
     clearInterval(timerInterval);
-    clearInterval(breathInterval);
-    isRunning = false;
-    timeLeft = timerDuration;
-    updateTimerDisplay();
-    document.getElementById("sessionBtn").textContent = "INITIALIZE DEEP WORK";
+    clearTimeout(breathingInterval);
+    isSessionActive = false;
+    sessionBtn.textContent = "INITIALIZE DEEP WORK";
     statusIndicator.textContent = "CALIBRATING";
-    breathRing.className = "visualizer-inner";
+    statusIndicator.classList.add("pulses");
     breathState.textContent = "STANDBY";
+    breathRing.className = "visualizer-inner";
 }
 
-function completeSession() {
-    resetSession();
-    statusIndicator.textContent = "COMPLETED";
-    breathState.textContent = "RESTORED";
-    alert("Deep Work Cycle Completed. Reconnect with the physical world.");
-}
+/* --- Event Handlers --- */
 
-// User Interaction Bindings
-document.getElementById("sessionBtn").addEventListener("click", toggleSession);
-document.getElementById("resetBtn").addEventListener("click", resetSession);
-
-document.getElementById("humToggle").addEventListener("click", (e) => {
-    initAudio();
-    if (e.target.classList.contains("active")) {
+// Atmosphere Toggles
+humToggle.addEventListener("click", () => {
+    if (isHumPlaying) {
         stopCosmicHum();
-        e.target.classList.remove("active");
-        e.target.textContent = "OFF";
     } else {
         startCosmicHum();
-        e.target.classList.add("active");
-        e.target.textContent = "ON";
     }
 });
 
-document.getElementById("rainToggle").addEventListener("click", (e) => {
-    initAudio();
-    if (e.target.classList.contains("active")) {
+rainToggle.addEventListener("click", () => {
+    if (isRainPlaying) {
         stopCyberRain();
-        e.target.classList.remove("active");
-        e.target.textContent = "OFF";
     } else {
         startCyberRain();
-        e.target.classList.add("active");
-        e.target.textContent = "ON";
     }
+});
+
+// Primary Start / Pause Action
+sessionBtn.addEventListener("click", () => {
+    if (isSessionActive) {
+        endSession();
+    } else {
+        startSession();
+    }
+});
+
+// Reset Deck Action
+resetBtn.addEventListener("click", () => {
+    endSession();
+    stopCosmicHum();
+    stopCyberRain();
+    timeLeft = 600;
+    updateTimerUI();
 });
